@@ -259,7 +259,7 @@ numInputs.forEach((numInput, idx) => {
 
 // Reset command logic
 document.getElementById('homeBtn').addEventListener('click', () => {
-    const home =;
+    const home =[90, 90, 90, 40];
     sliders.forEach((s, idx) => { 
         s.value = home[idx]; 
         numInputs[idx].value = home[idx]; 
