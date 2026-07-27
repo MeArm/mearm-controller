@@ -358,12 +358,13 @@ async function txTick() {
     if (!writer || !sendPending) return;
     const now = Date.now();
     if (now - lastSendTime >= 40) {
-        const v0 = parseInt(sliders[0].value, 10);
-        const v1 = parseInt(sliders[1].value, 10);
-        const v2 = parseInt(sliders[2].value, 10);
-        const v3 = parseInt(sliders[3].value, 10);
+        // String properties are used here to prevent bracket stripping
+        const v0 = parseInt(sliders["0"].value, 10);
+        const v1 = parseInt(sliders["1"].value, 10);
+        const v2 = parseInt(sliders["2"].value, 10);
+        const v3 = parseInt(sliders["3"].value, 10);
         
-        const packet = `${v0},${v1},${v2},${v3}\n`;
+        const packet = v0 + "," + v1 + "," + v2 + "," + v3 + "\n";
         if (packet !== lastSent) {
             try {
                 const data = new TextEncoder().encode(packet);
@@ -373,7 +374,7 @@ async function txTick() {
                 sendPending = false;
             } catch (err) {
                 console.error("Failed writing packet data stream", err);
-                disconnectHardware(); // Gracefully disconnect if pipeline breaks
+                disconnectHardware(); 
             }
         }
     }
