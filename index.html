@@ -2,156 +2,394 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Web MeArm Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeArm Web Controller Pro</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 8px; }
-        .control-group { margin: 15px 0; display: flex; align-items: center; }
-        .control-group label { width: 80px; font-weight: bold; }
-        .control-group input { flex-grow: 1; margin: 0 10px; }
-        .control-group span { width: 40px; text-align: right; }
-        button { padding: 10px; margin: 5px 2px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:disabled { background: #555; }
-        textarea { width: 100%; height: 120px; background: #000; color: #0f0; font-family: monospace; box-sizing: border-box; }
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --bg-console: #000000;
+            --primary: #007acc;
+            --primary-hover: #005999;
+            --accent-green: #00ff66;
+            --accent-red: #ff3333;
+            --text: #ffffff;
+            --text-muted: #aaaaaa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background-color: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .container.connected {
+            border-color: var(--accent-green);
+        }
+
+        h2 { margin-top: 0; font-weight: 600; font-size: 1.5rem; }
+        h3 { margin: 20px 0 10px 0; font-size: 1.1rem; color: var(--text-muted); }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.15s, opacity 0.15s;
+        }
+
+        button:hover:not(:disabled) { background-color: var(--primary-hover); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        #disconnectBtn { background-color: #333; }
+        #disconnectBtn:hover:not(:disabled) { background-color: #444; }
+        #homeBtn { background-color: #2a2a2a; border: 1px solid #444; }
+
+        .status-bar {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-red);
+        }
+
+        .status-dot.active { background-color: var(--accent-green); }
+
+        .control-group {
+            background: rgba(25, 25, 25, 0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-group label {
+            width: 60px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .control-group input[type="range"] {
+            flex-grow: 1;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .control-group input[type="number"] {
+            width: 55px;
+            padding: 6px;
+            background: #2b2b2b;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: white;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            background-color: var(--bg-console);
+            color: var(--accent-green);
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.85rem;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: none;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>MeArm 4-Servo Web Controller</h2>
-    <button id="connectBtn">Connect to Pico</button>
-    <button id="disconnectBtn" disabled>Disconnect</button>
-    <p id="status">Status: Not Connected</p>
+<div class="container" id="mainContainer">
+    <h2>MeArm Web Controller Pro</h2>
+    
+    <div class="btn-row">
+        <button id="connectBtn">Connect to Pico</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
 
-    <!-- Sliders matching original Python constraints -->
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Status: Device Disconnected</span>
+    </div>
+
+    <!-- Sliders and explicit manual number overrides -->
     <div class="control-group">
         <label>Base</label>
         <input type="range" id="slider0" min="1" max="179" value="90">
-        <block><span id="val0">90</span>°</block>
+        <input type="number" id="num0" min="1" max="179" value="90">
     </div>
     <div class="control-group">
         <label>Left</label>
         <input type="range" id="slider1" min="35" max="170" value="90">
-        <block><span id="val1">90</span>°</block>
+        <input type="number" id="num1" min="35" max="170" value="90">
     </div>
     <div class="control-group">
         <label>Right</label>
         <input type="range" id="slider2" min="30" max="130" value="90">
-        <block><span id="val2">90</span>°</block>
+        <input type="number" id="num2" min="30" max="130" value="90">
     </div>
     <div class="control-group">
         <label>Claw</label>
-        <input type="range" id="slider3" min="80" max="170" value="40">
-        <block><span id="val3">40</span>°</block>
+        <input type="range" id="slider3" min="80" max="170" value="90">
+        <input type="number" id="num3" min="80" max="170" value="90">
     </div>
 
-    <button id="homeBtn">Home Arm</button>
+    <div class="btn-row" style="margin-top: 20px;">
+        <button id="homeBtn">Home Axis Positions</button>
+    </div>
     
-    <h3>Hardware Console</h3>
-    <textarea id="console" readonly></textarea>
+    <h3>Hardware Console Readout</h3>
+    <textarea id="console" readonly placeholder="Waiting for serial stream data..."></textarea>
 </div>
 
 <script>
-let port, writer, reader;
+let port = null;
+let writer = null;
+let reader = null;
+let keepReading = true;
 let sendPending = false;
 let lastSent = "";
 let lastSendTime = 0;
+let txInterval = null;
+
+const container = document.getElementById('mainContainer');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const consoleTex = document.getElementById('console');
+const connectBtn = document.getElementById('connectBtn');
+const disconnectBtn = document.getElementById('disconnectBtn');
 
 const sliders = [
-    document.getElementById('slider0'), 
-    document.getElementById('slider1'), 
-    document.getElementById('slider2'), 
-    document.getElementById('slider3')
+    document.getElementById('slider0'), document.getElementById('slider1'), 
+    document.getElementById('slider2'), document.getElementById('slider3')
 ];
-const outputs = [
-    document.getElementById('val0'), 
-    document.getElementById('val1'), 
-    document.getElementById('val2'), 
-    document.getElementById('val3')
+const numInputs = [
+    document.getElementById('num0'), document.getElementById('num1'), 
+    document.getElementById('num2'), document.getElementById('num3')
 ];
-const consoleTex = document.getElementById('console');
-const statusText = document.getElementById('status');
 
-// Update value displays dynamically
+// Load configurations safely from local user browser storage
+function loadSavedPositions() {
+    const saved = localStorage.getItem('mearm_positions');
+    if (saved) {
+        try {
+            const positions = JSON.parse(saved);
+            sliders.forEach((s, i) => {
+                if(positions[i] !== undefined) {
+                    s.value = positions[i];
+                    numInputs[i].value = positions[i];
+                }
+            });
+        } catch(e) { console.error("Error parsing saved cache positions", e); }
+    }
+}
+
+function savePositions() {
+    const current = sliders.map(s => parseInt(s.value, 10));
+    localStorage.setItem('mearm_positions', JSON.stringify(current));
+}
+
+// Bi-directional slider linkage to text input boxes
 sliders.forEach((slider, idx) => {
     slider.addEventListener('input', () => {
-        outputs[idx].innerText = slider.value;
+        numInputs[idx].value = slider.value;
         sendPending = true;
+        savePositions();
     });
 });
 
-// FIXED: Populated the full array values matching your exact home configurations
+numInputs.forEach((numInput, idx) => {
+    numInput.addEventListener('input', () => {
+        let val = parseInt(numInput.value, 10);
+        const min = parseInt(numInput.min, 10);
+        const max = parseInt(numInput.max, 10);
+        
+        if (isNaN(val)) return;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        
+        numInput.value = val;
+        sliders[idx].value = val;
+        sendPending = true;
+        savePositions();
+    });
+});
+
+// Reset command logic
 document.getElementById('homeBtn').addEventListener('click', () => {
-    const home = [90, 90, 90, 40];
+    const home =[90, 90, 90, 90];
     sliders.forEach((s, idx) => { 
         s.value = home[idx]; 
-        outputs[idx].innerText = home[idx]; 
+        numInputs[idx].value = home[idx]; 
     });
     sendPending = true;
+    savePositions();
 });
 
-// Serial Connection
-document.getElementById('connectBtn').addEventListener('click', async () => {
-    try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-        writer = port.writable.getWriter();
-        statusText.innerText = "Status: Connected to hardware.";
-        document.getElementById('connectBtn').disabled = true;
-        document.getElementById('disconnectBtn').disabled = false;
-        
-        // Start read loop
-        readSerial();
-        // Start transmit loop
-        setInterval(txTick, 40); 
-    } catch (err) {
-        statusText.innerText = "Error: " + err;
+// UI Management State updates
+function updateUIConnected(isConnected) {
+    if(isConnected) {
+        container.classList.add('connected');
+        statusDot.classList.add('active');
+        statusText.innerText = "Status: Connected to hardware device.";
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+    } else {
+        container.classList.remove('connected');
+        statusDot.classList.remove('active');
+        statusText.innerText = "Status: Device Disconnected";
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+    }
+}
+
+// Serial Pipeline Initialization
+connectBtn.addEventListener('click', async () => {
+    console.log("Connect button clicked");
+    if ('serial' in navigator) {
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            writer = port.writable.getWriter();
+            
+            updateUIConnected(true);
+            keepReading = true;
+            readSerial();
+            
+            // Lock transmitter ticks to exactly 25Hz execution speed
+            txInterval = setInterval(txTick, 40); 
+        } catch (err) {
+            statusText.innerText = "Connection Failed: " + err.message;
+            updateUIConnected(false);
+        }
+    } else {
+        statusText.innerText = "Error: Web Serial API not supported in this browser.";
     }
 });
 
-document.getElementById('disconnectBtn').addEventListener('click', async () => {
-    if (writer) { await writer.releaseLock(); }
-    if (port) { await port.close(); }
-    statusText.innerText = "Status: Disconnected.";
-    document.getElementById('connectBtn').disabled = false;
-    document.getElementById('disconnectBtn').disabled = true;
-});
+async function disconnectHardware() {
+    keepReading = false;
+    if (txInterval) { clearInterval(txInterval); txInterval = null; }
+    
+    try {
+        if (reader) { await reader.cancel(); }
+        if (writer) { await writer.releaseLock(); writer = null; }
+        if (port) { await port.close(); port = null; }
+    } catch (e) { 
+        console.error("Error clearing pipeline locks", e); 
+    }
+    updateUIConnected(false);
+}
 
-// Asynchronous read loop matching the background thread worker logic
+disconnectBtn.addEventListener('click', disconnectHardware);
+
+// Robust read parsing loop
 async function readSerial() {
-    while (port && port.readable) {
-        reader = port.readable.getReader();
+    while (port && port.readable && keepReading) {
         try {
-            while (true) {
+            reader = port.readable.getReader();
+            while (keepReading) {
                 const { value, done } = await reader.read();
                 if (done) break;
                 const text = new TextDecoder().decode(value);
                 consoleTex.value += text;
+                
+                // Cap log growth to preserve memory allocation integrity
+                if (consoleTex.value.length > 5000) {
+                    consoleTex.value = consoleTex.value.substring(consoleTex.value.length - 3000);
+                }
                 consoleTex.scrollTop = consoleTex.scrollHeight;
             }
         } catch (err) {
+            console.error("Read cycle interrupt occurred", err);
             break;
         } finally {
-            reader.releaseLock();
+            if (reader) { 
+                reader.releaseLock(); 
+                reader = null; 
+            }
         }
     }
 }
 
-// FIXED: Explicitly maps the indices of the array elements to construct the packet string
+// Data Stream transmission routine
 async function txTick() {
     if (!writer || !sendPending) return;
     const now = Date.now();
-    if (now - lastSendTime > 40) {
-        const packet = `${sliders[0].value},${sliders[1].value},${sliders[2].value},${sliders[3].value}\n`;
+    if (now - lastSendTime >= 40) {
+        const v0 = parseInt(sliders[0].value, 10);
+        const v1 = parseInt(sliders[1].value, 10);
+        const v2 = parseInt(sliders[2].value, 10);
+        const v3 = parseInt(sliders[3].value, 10);
+        
+        const packet = `${v0},${v1},${v2},${v3}\n`;
         if (packet !== lastSent) {
-            const data = new TextEncoder().encode(packet);
-            await writer.write(data);
-            lastSent = packet;
-            lastSendTime = now;
-            sendPending = false;
+            try {
+                const data = new TextEncoder().encode(packet);
+                await writer.write(data);
+                lastSent = packet;
+                lastSendTime = now;
+                sendPending = false;
+            } catch (err) {
+                console.error("Failed writing packet data stream", err);
+                disconnectHardware(); // Gracefully disconnect if pipeline breaks
+            }
         }
     }
 }
+
+// Initialise window variables on boot
+loadSavedPositions();
+
+// Automatically handle unexpected hard cable disconnects
+navigator.serial.addEventListener('disconnect', (e) => {
+    if (port && e.target === port) {
+        disconnectHardware();
+        statusText.innerText = "Status: Hardware safety alert. Cable disconnected.";
+    }
+});
 </script>
 </body>
 </html>
