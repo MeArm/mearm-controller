@@ -8,8 +8,6 @@ This project bypasses the need for local desktop software installations (like Py
 
 <img width="567" height="587" alt="WebController" src="https://github.com/user-attachments/assets/c32171d7-9b01-46ca-bfcc-d09ed9e131f7" />
 
-
-Once hosted on GitHub Pages, insert your link here:
 👉 **[Launch Live Web Controller](https://mearm.github.io/mearm-controller/)**
 
 ---
